@@ -12,6 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -116,7 +117,7 @@ func (e *AlertmanagerKafkaExporter) ConnectKafka(host string, topic string, sslC
 		}
 	}
 	e.kafkaWriter = kafka.NewWriter(kafka.WriterConfig{
-		Brokers: []string{host},
+		Brokers: strings.Split(host, ","),
 		Topic:   topic,
 		Dialer:  dialer,
 	})
