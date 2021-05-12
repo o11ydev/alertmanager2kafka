@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,6 +26,13 @@ type (
 			alertsInvalid    *prometheus.CounterVec
 			alertsSuccessful *prometheus.CounterVec
 		}
+	}
+
+	KafkaSSLConfig struct {
+		EnableSSL  bool
+		CertFile   string
+		KeyFile    string
+		CACertFile string
 	}
 
 	AlertmanagerEntry struct {
@@ -78,12 +87,39 @@ func (e *AlertmanagerKafkaExporter) Init() {
 	prometheus.MustRegister(e.prometheus.alertsSuccessful)
 }
 
-func (e *AlertmanagerKafkaExporter) ConnectKafka(host string, topic string) {
-	e.kafkaWriter = &kafka.Writer{
-		Addr:     kafka.TCP(host),
-		Topic:    topic,
-		Balancer: &kafka.LeastBytes{},
+func (e *AlertmanagerKafkaExporter) ConnectKafka(host string, topic string, sslConfig *KafkaSSLConfig) {
+	dialer := kafka.DefaultDialer
+	if sslConfig.EnableSSL {
+		cert, err := tls.LoadX509KeyPair(sslConfig.CertFile, sslConfig.KeyFile)
+		if err != nil {
+			log.Fatalf("cannot load SSL key/certificate pair (key=%s, cert=%s): %s", sslConfig.KeyFile, sslConfig.CertFile, err)
+		}
+
+		if sslConfig.CACertFile == "" {
+			sslConfig.CACertFile = "/etc/ssl/certs/ca-certificates.crt"
+		}
+
+		caCertPEM, err := ioutil.ReadFile(sslConfig.CACertFile)
+		if err != nil {
+			log.Fatalf("cannot read SSL CA certificate file %s: %s", sslConfig.CACertFile, err)
+		}
+
+		caCertPool := x509.NewCertPool()
+		if ok := caCertPool.AppendCertsFromPEM([]byte(caCertPEM)); !ok {
+			log.Fatalf("cannot load SSL CA certificates from file %s: %s", sslConfig.CACertFile, err)
+		}
+
+		log.Infof("configured client-side SSL: key=%s, cert=%s, cacert=%s", sslConfig.KeyFile, sslConfig.CertFile, sslConfig.CACertFile)
+		dialer.TLS = &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			RootCAs:      caCertPool,
+		}
 	}
+	e.kafkaWriter = kafka.NewWriter(kafka.WriterConfig{
+		Brokers: []string{host},
+		Topic:   topic,
+		Dialer:  dialer,
+	})
 }
 
 func (e *AlertmanagerKafkaExporter) HttpHandler(w http.ResponseWriter, r *http.Request) {

@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	Author = "webdevops.io"
+	Author = "Filip Pytloun"
 )
 
 var (
@@ -36,7 +36,16 @@ func main() {
 	exporter := &AlertmanagerKafkaExporter{}
 	exporter.Init()
 
-	exporter.ConnectKafka(opts.Kafka.Host, opts.Kafka.Topic)
+	sslConfig := &KafkaSSLConfig{}
+	if opts.Kafka.SSLKey != "" {
+		sslConfig.EnableSSL = true
+		sslConfig.CertFile = opts.Kafka.SSLCert
+		sslConfig.KeyFile = opts.Kafka.SSLKey
+		sslConfig.CACertFile = opts.Kafka.SSLCACert
+	} else {
+		sslConfig.EnableSSL = false
+	}
+	exporter.ConnectKafka(opts.Kafka.Host, opts.Kafka.Topic, sslConfig)
 	defer exporter.kafkaWriter.Close()
 
 	// daemon mode
