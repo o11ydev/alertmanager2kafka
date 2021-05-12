@@ -1,6 +1,7 @@
 PROJECT_NAME		:= alertmanager2kafka
 DOCKER_ORG			:= genunix
-GIT_TAG				:= $(shell git describe --dirty --tags --always)
+#GIT_TAG				:= $(shell git describe --dirty --tags --always)
+GIT_TAG				:= $(shell git describe --tags --always)
 GIT_COMMIT			:= $(shell git rev-parse --short HEAD)
 LDFLAGS				:= -X "main.gitTag=$(GIT_TAG)" -X "main.gitCommit=$(GIT_COMMIT)" -extldflags "-static"
 
@@ -26,7 +27,12 @@ vendor:
 
 .PHONY: image
 image: build
-	docker build -t $(PROJECT_NAME):$(GIT_TAG) .
+	docker build -t $(DOCKER_ORG)/$(PROJECT_NAME):$(GIT_TAG) .
+	docker tag $(DOCKER_ORG)/$(PROJECT_NAME):$(GIT_TAG) $(DOCKER_ORG)/$(PROJECT_NAME):latest
+
+image-push: image
+	docker push $(DOCKER_ORG)/$(PROJECT_NAME):$(GIT_TAG)
+	docker push $(DOCKER_ORG)/$(PROJECT_NAME):latest
 
 build-push-development:
 	docker build -t $(DOCKER_ORG)/$(PROJECT_NAME):development . && docker push $(DOCKER_ORG)/$(PROJECT_NAME):development

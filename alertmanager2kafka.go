@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	kafka "github.com/segmentio/kafka-go"
 	"github.com/prometheus/client_golang/prometheus"
+	kafka "github.com/segmentio/kafka-go"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
@@ -17,7 +17,7 @@ const supportedWebhookVersion = "4"
 
 type (
 	AlertmanagerKafkaExporter struct {
-		kafkaWriter    *kafka.Writer
+		kafkaWriter *kafka.Writer
 
 		prometheus struct {
 			alertsReceived   *prometheus.CounterVec
@@ -80,9 +80,9 @@ func (e *AlertmanagerKafkaExporter) Init() {
 
 func (e *AlertmanagerKafkaExporter) ConnectKafka(host string, topic string) {
 	e.kafkaWriter = &kafka.Writer{
-		Addr:      kafka.TCP(host),
-		Topic:     topic,
-		Balancer:  &kafka.LeastBytes{},
+		Addr:     kafka.TCP(host),
+		Topic:    topic,
+		Balancer: &kafka.LeastBytes{},
 	}
 }
 

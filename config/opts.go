@@ -17,8 +17,8 @@ type (
 		// kafka
 		Kafka struct {
 			// Kafka settings
-			Host      string   `long:"kafka.host"                 env:"KAFKA_HOST"                        description:"Kafka host, eg. kafka-0:9092" required:"true"`
-			Topic     string   `long:"kafka.topic"                env:"KAFKA_TOPIC"                       description:"Kafka topic, eg. alertmanager" required:"true"`
+			Host  string `long:"kafka.host"                 env:"KAFKA_HOST"                        description:"Kafka host, eg. kafka-0:9092" required:"true"`
+			Topic string `long:"kafka.topic"                env:"KAFKA_TOPIC"                       description:"Kafka topic, eg. alertmanager" required:"true"`
 		}
 
 		// general options
