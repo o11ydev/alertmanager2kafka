@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
-	elasticsearch "github.com/elastic/go-elasticsearch/v7"
 	"github.com/jessevdk/go-flags"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
-	"github.com/webdevops/alertmanager2es/config"
+	"github.com/fpytloun/alertmanager2kafka/config"
 	"net/http"
 	"os"
 	"path"
@@ -30,23 +29,15 @@ var (
 func main() {
 	initArgparser()
 
-	log.Infof("starting alertmanager2es v%s (%s; %s; by %v)", gitTag, gitCommit, runtime.Version(), Author)
+	log.Infof("starting alertmanager2kafka v%s (%s; %s; by %v)", gitTag, gitCommit, runtime.Version(), Author)
 	log.Info(string(opts.GetJson()))
 
 	log.Infof("init exporter")
-	exporter := &AlertmanagerElasticsearchExporter{}
+	exporter := &AlertmanagerKafkaExporter{}
 	exporter.Init()
 
-	cfg := elasticsearch.Config{
-		Addresses: opts.Elasticsearch.Addresses,
-		Username:  opts.Elasticsearch.Username,
-		Password:  opts.Elasticsearch.Password,
-		APIKey:    opts.Elasticsearch.ApiKey,
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-		},
-	}
-	exporter.ConnectElasticsearch(cfg, opts.Elasticsearch.Index)
+	exporter.ConnectKafka(opts.Kafka.Host, opts.Kafka.Topic)
+	defer exporter.kafkaWriter.Close()
 
 	// daemon mode
 	log.Infof("starting http server on %s", opts.ServerBind)
@@ -102,14 +93,13 @@ func initArgparser() {
 }
 
 // start and handle prometheus handler
-func startHttpServer(exporter *AlertmanagerElasticsearchExporter) {
+func startHttpServer(exporter *AlertmanagerKafkaExporter) {
 	// healthz
 	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		if _, err := fmt.Fprint(w, "Ok"); err != nil {
 			log.Error(err)
 		}
 	})
-
 	http.HandleFunc("/webhook", exporter.HttpHandler)
 	http.Handle("/metrics", promhttp.Handler())
 	log.Fatal(http.ListenAndServe(opts.ServerBind, nil))

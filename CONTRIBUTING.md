@@ -1,4 +1,4 @@
-# Contributing to alertmanager2es
+# Contributing to alertmanager2kafka
 
 Contributions are welcomed.
 
@@ -6,7 +6,7 @@ Contributions are welcomed.
 
 To download, run:
 
-    go get -u github.com/webdevops/alertmanager2es
+    go get -u github.com/fpytloun/alertmanager2kafka
 
 To run the tests:
 
