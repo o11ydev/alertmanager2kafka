@@ -91,7 +91,7 @@ func initArgparser() {
 	if opts.Logger.LogJson {
 		log.SetReportCaller(true)
 		log.SetFormatter(&log.JSONFormatter{
-			DisableTimestamp: true,
+			DisableTimestamp: false,
 			CallerPrettyfier: func(f *runtime.Frame) (string, string) {
 				s := strings.Split(f.Function, ".")
 				funcName := s[len(s)-1]

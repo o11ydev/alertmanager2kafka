@@ -164,13 +164,17 @@ func (e *AlertmanagerKafkaExporter) HttpHandler(w http.ResponseWriter, r *http.R
 	msg.Timestamp = now.Format(time.RFC3339)
 
 	incidentJson, _ := json.Marshal(msg)
-
 	err = e.kafkaWriter.WriteMessages(context.Background(), kafka.Message{Value: incidentJson})
 	if err != nil {
+		switch kafkaErr := err.(type) {
+		case kafka.WriteErrors:
+			err = kafkaErr[0]
+		}
+
+		errMsg := fmt.Errorf("unable to write into kafka: %s", err)
 		e.prometheus.alertsInvalid.WithLabelValues().Inc()
-		err := fmt.Errorf("unable to write into kafka: %s", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		log.Error(err)
+		http.Error(w, errMsg.Error(), http.StatusBadRequest)
+		log.Error(errMsg)
 		return
 	}
 
