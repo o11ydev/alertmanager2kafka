@@ -18,7 +18,8 @@ jobs:
       id: docker_meta
       uses: crazy-max/ghaction-docker-meta@v1
       with:
-        images: webdevops/alertmanager2es,quay.io/webdevops/alertmanager2es
+        #images: o11ydev/alertmanager2kafka,quay.io/o11ydev/alertmanager2kafka
+        images: quay.io/o11ydev/alertmanager2kafka
         #tag-sha: true
 
     - name: Set up QEMU

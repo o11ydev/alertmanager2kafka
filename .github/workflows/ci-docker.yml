@@ -11,4 +11,4 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag webdevops/alertmanager2es:$(date +%s)
+      run: docker build . --file Dockerfile --tag o11ydev/alertmanager2kafka:$(date +%s)
